@@ -1,5 +1,6 @@
 package com.example.lin;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -23,7 +24,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MsgActivity extends AppCompatActivity implements Runnable {
+public class MsgActivity extends Activity implements Runnable {
     private PrintWriter cout;
     private InputStream cin;
     private Socket socket;
@@ -50,23 +51,6 @@ public class MsgActivity extends AppCompatActivity implements Runnable {
             }
         }
     };
-
-    @Override
-    public void run() {
-        try {
-            while (true) {
-                if (cin == null) continue;
-                byte[] bytes = new byte[1024];
-                int len = cin.read(bytes);
-                if (len != -1) {
-                    builder_str.append(new String(bytes, 0, len, "UTF-8") + "\n");
-                    handler.sendEmptyMessage(0x133);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -99,51 +83,59 @@ public class MsgActivity extends AppCompatActivity implements Runnable {
                 }
             }
         }.start();
-        findViewById(R.id.submit).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.submit).setOnClickListener(v -> new Thread() {
             @Override
-            public void onClick(View v) {
-                new Thread() {
-                    @Override
-                    public void run() {
-                        try {
-                            String msg = input.getText().toString();
+            public void run() {
+                try {
+                    String msg = input.getText().toString();
 //                            System.out.println("first "+msg);
-                            if (socket.isConnected() && !socket.isOutputShutdown())
+                    if (socket.isConnected() && !socket.isOutputShutdown())
 //                                System.out.println("msg :"+msg);
-                            {
-                                cout.print(msg);
-                                cout.flush();
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                    {
+                        cout.print(msg);
+                        cout.flush();
                     }
-                }.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        });
+        }.start());
         recv_flag = true;
         recv.start();
     }
 
     @Override
+    public void run() {
+        try {
+            while (true && recv_flag) {
+                if (cin == null) continue;
+                byte[] bytes = new byte[1024];
+                int len = cin.read(bytes);
+                if (len != -1) {
+                    builder_str.append(new String(bytes, 0, len, "UTF-8") + "\n");
+                    handler.sendEmptyMessage(0x133);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        if (socket != null) {
+            // 线程
+            new Thread(() -> {
                 try {
                     recv_flag = false;
-                    socket.close();
                     cin.close();
                     cout.close();
-
+                    socket.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }
-        }).start();
-
-
+            }).start();
+        }
     }
 }

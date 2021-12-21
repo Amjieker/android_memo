@@ -1,4 +1,4 @@
-package com.example.lin;
+package com.example.lin.Tool;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +39,7 @@ public class SocketDemo {
         }
     });
     Socket socket;
+
     public SocketDemo(String ip, int port){
         try{
             socket = new Socket(ip,port);

@@ -1,41 +1,42 @@
 package com.example.lin;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.text.TextPaint;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.example.lin.Tool.Const;
+import com.example.lin.Tool.HttpTools;
+import com.example.lin.Tool.Tools;
 
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.Date;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Response;
 
 public class MainActivity extends Activity {
     private boolean check_loading, check_res;
     private boolean flag;
+    private MyVideoView myVideoView;
     private Date date;
 
     @SuppressLint("Range")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_login);
+        init();
         date = new Date();
         // 处理背景透明度
-        findViewById(R.id.login_con).getBackground().setAlpha(150);
+//        findViewById(R.id.login_con).getBackground().setAlpha(150);
         // 登录监听
         flag = true;
         findViewById(R.id.button_login).setOnClickListener(V -> {
@@ -67,6 +68,53 @@ public class MainActivity extends Activity {
         });
     }
 
+    @Override
+    protected void onRestart() {
+        init();
+        super.onRestart();
+    }
+
+    @Override
+    protected void onPause() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            myVideoView.stopNestedScroll();
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        if(myVideoView !=null) {
+            myVideoView.stopPlayback();
+        }
+        super.onStop();
+    }
+
+    public void init(){
+        myVideoView = findViewById(R.id.video_view);
+        myVideoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" +R.raw.relogin));
+        myVideoView.requestFocus();
+        myVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                if(mp.isPlaying()){
+                    mp.stop();
+                    mp.release();
+                    mp = new MediaPlayer();
+                }
+                mp.setVolume(0f,0f);
+                mp.setLooping(true);
+                mp.start();
+            }
+        });
+        myVideoView.setFocusable(false);
+        myVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                myVideoView.start();
+            }
+        });
+    }
     public synchronized boolean check() {
         check_loading = true;
         check_res = false;
@@ -78,7 +126,7 @@ public class MainActivity extends Activity {
                 object.accumulate("nick", nick);
                 object.accumulate("pass", pass);
                 check_res = new JSONObject(HttpTools
-                        .SendPost("http://101.43.66.34:8084/check", object.toString())
+                        .SendPost(Const.Check, object.toString())
                 ).get("code")
                         .equals("yes");
                 System.out.println(check_res);
@@ -94,7 +142,7 @@ public class MainActivity extends Activity {
          * bug 先留着，好像影响不大，内存泄漏好像没有
          * */
         while (check_loading) System.out.println("thread :" + x);
-        ; // 堵塞执行
+        // 堵塞执行
         return check_res;
     }
 

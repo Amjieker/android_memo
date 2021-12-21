@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/white"
+    tools:context=".MsgActivity"
+    >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/radio_group"
+        >
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/view_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:ignore="SpeakableTextPresentCheck" />
+        <View
+            android:layout_width="match_parent"
+            android:background="@color/black"
+            android:layout_height="5px"
+            android:layout_alignParentBottom="true"/>
+    </RelativeLayout>
+    <RadioGroup
+        android:id="@+id/radio_group"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:background="@color/white"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/bt_index"
+            style="@style/tab_menu_item"
+            android:layout_weight="1"
+            android:checked="true"
+            android:drawableTop="@drawable/sl_msg"
+            android:text="聊天室" />
+
+        <RadioButton
+            android:id="@+id/bt_user"
+            style="@style/tab_menu_item"
+            android:drawableTop="@drawable/sl_index"
+            android:text="信息" />
+
+    </RadioGroup>
+</RelativeLayout>
